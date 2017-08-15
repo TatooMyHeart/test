@@ -151,11 +151,16 @@ public class WechatServiceImpl implements WechatService {
                 String third_session = base64Encoder.encode(sha256.digest(temp.getBytes()));
 
 
+                if(wechatRepository.findAllByThirdsession(third_session)!=null)
+                {
+                    return "third_session aleardy exist";
+                }
+
                 Wechat wechat = new Wechat();
                 wechat.setThirdsession(third_session);
                 wechat.setOpenid(wechatBean.getOpenid());
                 wechat.setSessionkey(wechatBean.getSession_key());
-                wechatRepository.saveAndFlush(wechat);
+                wechatRepository.save(wechat);
                 return third_session;
             } else if (wechatBean.getErrmsg() != null) {
                 return wechatBean.getErrmsg();

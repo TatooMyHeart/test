@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.TextMessage;
 
 import javax.servlet.http.HttpServletRequest;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -44,9 +46,17 @@ public class TaskController {
 
     @RequestMapping(value = "createTask",method = RequestMethod.POST)
     public int createTask(@RequestBody Executors Taskwithexecutors, HttpServletRequest request) {
+        //验证日期格式
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        simpleDateFormat.setLenient(false);
+        try {
+            simpleDateFormat.parse(Taskwithexecutors.getDeadline());
+        } catch (ParseException e) {
+            return TaskStates.ERROR.getStates();
+        }
+
         TaskStates taskStates = TaskStates.SUCCESS;
-       List<Users> usersList = new ArrayList<Users>();
-       usersList=Taskwithexecutors.getUsers();
+        List<Users> usersList=Taskwithexecutors.getUsers();
         List<Tasks> tasksList = new ArrayList<Tasks>();
         for(int i=0;i<usersList.size();i++)
         {
