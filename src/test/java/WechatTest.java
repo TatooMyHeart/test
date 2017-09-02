@@ -82,14 +82,22 @@ public class WechatTest {
 //        }
 //
 
-        Date date = new Date();
-        long time = date.getTime();
-        System.out.println(time);
-        String s=time+"";
-        System.out.println(s);
-        long l=Long.valueOf(s);
+        String s = "2017-08-02 00:00:00";
+        String a="2017-07-09 14:00";
+       SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+       simpleDateFormat.setLenient(false);
+        try {
+            simpleDateFormat.parse(s);
+        } catch (ParseException e) {
+            System.out.println("error");
+        }
 
-        System.out.println(l-date.getTime());
+        try {
+            simpleDateFormat.parse(a);
+        } catch (ParseException e) {
+            System.out.println(a);
+        }
+
     }
 
 }

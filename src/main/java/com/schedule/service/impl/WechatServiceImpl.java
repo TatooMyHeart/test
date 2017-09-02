@@ -44,10 +44,11 @@ public class WechatServiceImpl implements WechatService {
     @Autowired
     WechatRepository wechatRepository;
 
-    public WechatStates wechatRegister(Users users,String thirdsession, HttpServletRequest request) {
+    public WechatStates wechatRegister(Users users,HttpServletRequest request) {
         HttpSession session = request.getSession();
+        if(session.getAttribute("tel")==null){return WechatStates.ERROR;}
         String tel=session.getAttribute("tel").toString();
-        Wechat wechat = wechatRepository.findAllByThirdsession(thirdsession);
+        Wechat wechat = (Wechat)session.getAttribute("wechat");
         //检查用户是否为空
         if (null == users) {
             return WechatStates.ERROR;
@@ -59,6 +60,12 @@ public class WechatServiceImpl implements WechatService {
         //检查用户名是否重复
         if (userRepository.findAllByName(users.getName()) != null) {
             return WechatStates.NAME_EXIST;
+        }
+
+        //检查unionId是否重复
+        if(userRepository.findAllByWechatid(wechat.getUnionId())!=null)
+        {
+            return WechatStates.ERROR;
         }
                 MessageDigest sha256 = null;
                 try {
@@ -72,24 +79,49 @@ public class WechatServiceImpl implements WechatService {
                 users.setTel(tel);
                 users.setNickname(wechat.getNickname());
                 userRepository.save(users);
+
+        if(wechatRepository.findAllByThirdsession(wechat.getThirdsession())!=null)
+        {
+            Wechat wechat1=wechatRepository.findAllByThirdsession(wechat.getThirdsession());
+            if(wechat1.getUnionId()==wechat.getUnionId())
+            {
+                return WechatStates.ERROR;
+            }
+        }
+                wechatRepository.save(wechat);
                 session.setAttribute("users",users);
                 return WechatStates.SUCCESS;
     }
 
 
-    public WechatStates wechatTel(String tel,String param,String thirdsession, HttpServletRequest request) {
+    public WechatStates wechatTel(String tel,String param, HttpServletRequest request) {
         HttpSession session = request.getSession();
-        Wechat wechat = wechatRepository.findAllByThirdsession(thirdsession);
+        if(session.getAttribute("wechat")==null){return WechatStates.ERROR;}
+        Wechat wechat = (Wechat)session.getAttribute("wechat");
+        System.out.println("unionid"+wechat.getUnionId());
+        System.out.println("3rdsession"+wechat.getThirdsession());
         Users users = userRepository.findAllByTel(tel);
         if (users == null) {
             session.setAttribute("tel",tel);
             return WechatStates.NOT_REGISTER;
         } else {
+            if(wechatRepository.findAllByThirdsession(wechat.getThirdsession())!=null)
+            {
+                if(wechatRepository.findAllByThirdsession(wechat.getThirdsession()).getUnionId()==wechat.getUnionId())
+                {
+                    return WechatStates.ERROR;
+                }
+            }
            if(users.getWechatid()==null)
            {
+               if(userRepository.findAllByWechatid(wechat.getUnionId())!=null)
+               {
+                   return WechatStates.ERROR;
+               }
                userRepository.updateUnionIdByUserid(wechat.getUnionId(),users.getUserid());
                users = userRepository.findAllByUserid(users.getUserid());
            }
+            wechatRepository.save(wechat);
             Date date = new Date();
             long paramGetTime = date.getTime();
             if (param.equals(session.getAttribute("param"))) {
@@ -151,16 +183,20 @@ public class WechatServiceImpl implements WechatService {
                 String third_session = base64Encoder.encode(sha256.digest(temp.getBytes()));
 
 
-                if(wechatRepository.findAllByThirdsession(third_session)!=null)
-                {
-                    return "third_session aleardy exist";
-                }
-
-                Wechat wechat = new Wechat();
-                wechat.setThirdsession(third_session);
-                wechat.setOpenid(wechatBean.getOpenid());
-                wechat.setSessionkey(wechatBean.getSession_key());
-                wechatRepository.save(wechat);
+                HttpSession session = request.getSession();
+                session.setAttribute("thirdsession",third_session);
+                session.setAttribute("sessionkey",wechatBean.getSession_key());
+                session.setAttribute("openid",wechatBean.getOpenid());
+//                if(wechatRepository.findAllByThirdsession(third_session)!=null)
+//                {
+//                    return "third_session aleardy exist";
+//                }
+//
+//                Wechat wechat = new Wechat();
+//                wechat.setThirdsession(third_session);
+//                wechat.setOpenid(wechatBean.getOpenid());
+//                wechat.setSessionkey(wechatBean.getSession_key());
+//                wechatRepository.save(wechat);
                 return third_session;
             } else if (wechatBean.getErrmsg() != null) {
                 return wechatBean.getErrmsg();
@@ -190,11 +226,22 @@ public class WechatServiceImpl implements WechatService {
         }
     }
 
-    public WechatStates getWechatInfo(WechatBean wechatBean,HttpServletRequest request,HttpServletResponse response)
+    public String getWechatInfo(WechatBean wechatBean,HttpServletRequest request,HttpServletResponse response)
     {
-        Wechat wechat=wechatRepository.findAllByThirdsession(wechatBean.getThirdsession());
-        if(wechat==null){return WechatStates.OUT_OF_TIME;}
-        String sessionkey=wechat.getSessionkey();
+//        System.out.println(wechatBean.getThirdsession());
+//        Wechat wechat=wechatRepository.findAllByThirdsession(wechatBean.getThirdsession());
+//        System.out.println(wechat.getThirdsession());
+//        if(wechat==null){return WechatStates.OUT_OF_TIME;}
+//        String sessionkey=wechat.getSessionkey();
+        HttpSession session = request.getSession();
+//        session.setAttribute("thirdsession","Ez47wkGE4J0vYTuhwpq6VrDmYaPgubmpouCNOoFikaM=");
+//        session.setAttribute("sessionkey","mWpcKk/I7JyLGb6WvDAM9g==");
+//        session.setAttribute("openid","oiHfw0IYoekwNYvxD7AjTM2dl3Ow");
+        if(session.getAttribute("sessionkey")==null)
+        {
+            return "timeout";
+        }
+        String sessionkey=session.getAttribute("sessionkey").toString();
         AES aes = new AES();
         try {
             byte[] resultByte=aes.decrypt(Base64.decodeBase64(wechatBean.getEncryptedData()),
@@ -207,13 +254,17 @@ public class WechatServiceImpl implements WechatService {
                 encryptedDataBean=gson.fromJson(userInfo,EncryptedDataBean.class);
                 if(encryptedDataBean.getUnionId()==null)
                 {
-                    return WechatStates.ERROR;
+                    return "No unionID in encryptedData";
                 }
 
+                Wechat wechat = new Wechat();
                 wechat.setNickname(encryptedDataBean.getNickName());
                 wechat.setUnionId(encryptedDataBean.getUnionId());
                 wechat.setIv(wechatBean.getIv());
                 wechat.setEncryptedData(wechatBean.getEncryptedData());
+                wechat.setThirdsession(session.getAttribute("thirdsession").toString());
+                wechat.setSessionkey(sessionkey);
+                wechat.setOpenid(session.getAttribute("openid").toString());
 
                 if(wechatBean.getSignature()==null){
                     wechat.setSignature(null);
@@ -226,13 +277,28 @@ public class WechatServiceImpl implements WechatService {
                 }else{
                     wechat.setRawDate(wechatBean.getRawDate());
                 }
-                wechatRepository.updateWechatInfoByThirdsession(wechat.getEncryptedData(),wechat.getIv(),wechat.getNickname(),
-                        wechat.getRawDate(),wechat.getSignature(),wechat.getUnionId(),wechat.getThirdsession());
-            }
+                session.setAttribute("wechat",wechat);
+//                wechatRepository.updateWechatInfoByThirdsession(wechat.getEncryptedData(),wechat.getIv(),wechat.getNickname(),
+//                        wechat.getRawDate(),wechat.getSignature(),wechat.getUnionId(),wechat.getThirdsession());
+
+
+             }
         } catch (InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
 
-        return  WechatStates.SUCCESS;
+        Wechat wechat = (Wechat)session.getAttribute("wechat");
+        if(wechat.getUnionId()==null){return null; }
+       return wechat.getUnionId();
+    }
+
+
+    public WechatStates wechatOut(String unionId,HttpServletRequest request)
+    {
+            Wechat wechat = wechatRepository.findAllByUnionId(unionId);
+            if(wechat!=null) {
+                wechatRepository.delete(wechat);
+            }
+            return WechatStates.SUCCESS;
     }
 }

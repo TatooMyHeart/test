@@ -12,11 +12,11 @@ import javax.servlet.http.HttpSession;
  */
 public class LoginIntercepter implements org.springframework.web.servlet.HandlerInterceptor{
     private static final String[] IGNORE_URL={
-            "/login","/register","/sendParam","/deleteUser","/upload",
+            "/login","/register","/sendParam","/deleteUser","/upload","/wechatOut",
             "/getThirdSession","/checkThirdSession","/wechatRegister","/wechatTel","/getWechatInfo",
             "/schedule/login","/schedule/register","/schedule/sendParam", "/schedule/deleteUser",
             "/schedule/getThirdSession","/schedule/checkThirdSession","/schedule/wechatRegister",
-            "/schedule/wechatTel","/schedule/getWechatInfo",};
+            "/schedule/wechatTel","/schedule/getWechatInfo","/schedule/wechatOut"};
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
         boolean b= false;

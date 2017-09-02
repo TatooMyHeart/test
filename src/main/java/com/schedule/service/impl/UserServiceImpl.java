@@ -268,12 +268,6 @@ public class UserServiceImpl implements UserService {
         HttpSession session = request.getSession();
         Users users = (Users)session.getAttribute("users");
         userRepository.updateUDIDAndTimeByUserid(null,null,users.getUserid());
-        if(users.getWechatid()!=null) {
-            Wechat wechat = wechatRepository.findAllByUnionId(users.getWechatid());
-            if(wechat!=null) {
-                wechatRepository.delete(wechat);
-            }
-        }
     }
 
     public Users getGroupUsers(Integer user_id)

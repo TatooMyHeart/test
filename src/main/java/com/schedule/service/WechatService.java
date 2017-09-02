@@ -14,10 +14,11 @@ import javax.servlet.http.HttpServletResponse;
  */
 @Service
 public interface WechatService {
-    WechatStates wechatRegister(Users users,String thirdsession, HttpServletRequest request);
-    WechatStates wechatTel(String tel,String param,String thirdsession, HttpServletRequest request);
+    WechatStates wechatRegister(Users users, HttpServletRequest request);
+    WechatStates wechatTel(String tel,String param, HttpServletRequest request);
     String getThirdSession(String code, HttpServletRequest request, HttpServletResponse response);
     WechatStates checkThirdSession(String thirdSession, HttpServletResponse response, HttpServletRequest request);
-    WechatStates getWechatInfo(WechatBean wechatBean, HttpServletRequest request, HttpServletResponse response);
+    String getWechatInfo(WechatBean wechatBean, HttpServletRequest request, HttpServletResponse response);
+    WechatStates wechatOut(String unionId,HttpServletRequest request);
 
 }

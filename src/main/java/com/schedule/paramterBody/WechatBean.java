@@ -16,15 +16,6 @@ public class WechatBean {
     private String signature;
     private String encryptedData;
     private String iv;
-    private String thirdsession;
-
-    public String getThirdsession() {
-        return thirdsession;
-    }
-
-    public void setThirdsession(String thirdsession) {
-        this.thirdsession = thirdsession;
-    }
 
     public String getSession_key() {
         return session_key;
